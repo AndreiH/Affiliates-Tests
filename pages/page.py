@@ -3,14 +3,14 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
-Created on Jun 21, 2010
 
-'''
+import time
+
 from unittestzero import Assert
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import ElementNotVisibleException
+from selenium.common.exceptions import TimeoutException
 
 
 class Page(object):
@@ -62,6 +62,45 @@ class Page(object):
             return self.selenium.find_element(*locator).is_displayed()
         except (NoSuchElementException, ElementNotVisibleException):
             return False
+
+    def wait_for_element_visible(self, *locator):
+        count = 0
+        while not self.is_element_visible(*locator):
+            time.sleep(1)
+            count += 1
+            if count == self.timeout:
+                raise Exception(':'.join(locator) + " is not visible")
+
+    def wait_for_element_not_visible(self, *locator):
+        count = 0
+        while self.is_element_visible(*locator):
+            time.sleep(1)
+            count += 1
+            if count == self.timeout:
+                raise Exception(':'.join(locator) + " is still visible")
+
+    def wait_for_element_present(self, *locator):
+        """Wait for an element to become present."""
+        self.selenium.implicitly_wait(0)
+        try:
+            WebDriverWait(self.selenium, 10).until(lambda s: self._selenium_root.find_element(*locator))
+        except TimeoutException:
+            Assert.fail(TimeoutException)
+        finally:
+            # set back to where you once belonged
+            self.selenium.implicitly_wait(self.testsetup.default_implicit_wait)
+
+    def wait_for_element_not_present(self, *locator):
+        """Wait for an element to become not present."""
+        self.selenium.implicitly_wait(0)
+        try:
+            WebDriverWait(self.selenium, 10).until(lambda s: len(self._selenium_root.find_elements(*locator)) < 1)
+            return True
+        except TimeoutException:
+            return False
+        finally:
+            # set back to where you once belonged
+            self.selenium.implicitly_wait(self.testsetup.default_implicit_wait)
 
     def open(self, url_fragment):
         self.selenium.get(self.base_url + url_fragment)

@@ -76,8 +76,11 @@ class EditProfile(Page):
         def __init__(self, testsetup):
             Page.__init__(self, testsetup)
             WebDriverWait(self.selenium, self.timeout).until(
-                lambda s: self.is_element_visible(*self._modal_locator))
+                lambda s: s.find_element(*self._modal_locator).get_attribute('style') == 'display: block;')
             self._root_element = self.selenium.find_element(*self._modal_locator)
+
+        def wait_edit_profile_modal_not_visible(self):
+            self.wait_for_element_not_visible(*self._modal_locator)
 
         @property
         def display_name_label(self):
@@ -107,10 +110,7 @@ class EditProfile(Page):
 
         def click_save_my_changes(self):
             self._root_element.find_element(*self._save_locator).click()
-            WebDriverWait(self.selenium, self.timeout).until(
-                lambda s: not self.is_element_visible(*self._modal_locator))
+            self.wait_edit_profile_modal_not_visible()
 
         def click_cancel(self):
             self._root_element.find_element(*self._cancel_locator).click()
-            WebDriverWait(self.selenium, self.timeout).until(
-                lambda s: not self.is_element_visible(*self._modal_locator))
