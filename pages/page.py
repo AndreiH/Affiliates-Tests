@@ -64,20 +64,24 @@ class Page(object):
             return False
 
     def wait_for_element_visible(self, *locator):
-        count = 0
-        while not self.is_element_visible(*locator):
-            time.sleep(1)
-            count += 1
-            if count == self.timeout:
-                raise Exception(':'.join(locator) + " is not visible")
+        self.selenium.implicitly_wait(0)
+        try:
+            WebDriverWait(self.selenium, 10).until(lambda s: self._selenium_root.find_element(*locator).is_displayed())
+        except TimeoutException:
+            Assert.fail(TimeoutException)
+        finally:
+            # set back to where you once belonged
+            self.selenium.implicitly_wait(self.testsetup.default_implicit_wait)
 
     def wait_for_element_not_visible(self, *locator):
-        count = 0
-        while self.is_element_visible(*locator):
-            time.sleep(1)
-            count += 1
-            if count == self.timeout:
-                raise Exception(':'.join(locator) + " is still visible")
+        self.selenium.implicitly_wait(0)
+        try:
+            WebDriverWait(self.selenium, 10).until(lambda s: not self._selenium_root.find_element(*locator).is_displayed())
+        except TimeoutException:
+            Assert.fail(TimeoutException)
+        finally:
+            # set back to where you once belonged
+            self.selenium.implicitly_wait(self.testsetup.default_implicit_wait)
 
     def wait_for_element_present(self, *locator):
         """Wait for an element to become present."""
