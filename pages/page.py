@@ -26,6 +26,7 @@ class Page(object):
         self.base_url = testsetup.base_url
         self.selenium = testsetup.selenium
         self.timeout = testsetup.timeout
+        self._selenium_root = hasattr(self, '_root_element') and self._root_element or self.selenium
 
     @property
     def page_title(self):
@@ -78,7 +79,7 @@ class Page(object):
         try:
             WebDriverWait(self.selenium, 10).until(lambda s: not self._selenium_root.find_element(*locator).is_displayed())
         except TimeoutException:
-            Assert.fail(TimeoutException)
+            return False
         finally:
             # set back to where you once belonged
             self.selenium.implicitly_wait(self.testsetup.default_implicit_wait)
